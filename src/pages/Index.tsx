@@ -1,32 +1,78 @@
-import { useRef, useCallback } from "react";
+import { useCallback } from "react";
 import VoiceOrb from "@/components/VoiceOrb";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 
 const Index = () => {
-  const { state, startListening, stopListening } = useVoiceAssistant();
-  const isListeningRef = useRef(false);
+  const { state, transcript, response, error, isSupported, startListening, stopListening } = useVoiceAssistant();
 
   const handleOrbPress = useCallback(() => {
     if (state === "idle") {
-      isListeningRef.current = true;
       startListening();
-      
-      setTimeout(() => {
-        if (isListeningRef.current) {
-          isListeningRef.current = false;
-          stopListening();
-        }
-      }, 3000);
     } else if (state === "listening") {
-      isListeningRef.current = false;
       stopListening();
     }
   }, [state, startListening, stopListening]);
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
+      {/* Browser compatibility warning */}
+      {!isSupported && (
+        <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
+          <p className="text-destructive text-sm">
+            Seu navegador não suporta reconhecimento de voz. Use Chrome, Safari ou Edge.
+          </p>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
+          <p className="text-destructive text-sm">{error}</p>
+        </div>
+      )}
+
       {/* Main content */}
       <main className="relative z-10 flex flex-col items-center justify-center px-4">
+        {/* Transcript display - what user is saying */}
+        {(state === "listening" || state === "processing") && transcript && (
+          <div 
+            className="mb-8 max-w-md text-center animate-fade-in"
+            style={{
+              animation: "fadeIn 0.3s ease-in-out"
+            }}
+          >
+            <p className="text-muted-foreground text-sm uppercase tracking-wider mb-2">Você disse:</p>
+            <p 
+              className="text-primary text-lg"
+              style={{
+                textShadow: "0 0 10px hsl(185 100% 50% / 0.4)"
+              }}
+            >
+              "{transcript}"
+            </p>
+          </div>
+        )}
+
+        {/* Response display - what JARVIS is saying */}
+        {state === "responding" && response && (
+          <div 
+            className="mb-8 max-w-md text-center animate-fade-in"
+            style={{
+              animation: "fadeIn 0.3s ease-in-out"
+            }}
+          >
+            <p className="text-muted-foreground text-sm uppercase tracking-wider mb-2">JARVIS:</p>
+            <p 
+              className="text-primary text-lg"
+              style={{
+                textShadow: "0 0 10px hsl(185 100% 50% / 0.4)"
+              }}
+            >
+              "{response}"
+            </p>
+          </div>
+        )}
+
         {/* Voice Orb */}
         <VoiceOrb 
           state={state} 
@@ -43,10 +89,23 @@ const Index = () => {
               textShadow: "0 0 20px hsl(185 100% 50% / 0.6), 0 0 40px hsl(185 100% 50% / 0.3)"
             }}
           >
-            Pressione o círculo para falar
+            {state === "listening" 
+              ? "Estou ouvindo..." 
+              : state === "processing"
+              ? "Processando..."
+              : state === "responding"
+              ? "Respondendo..."
+              : "Pressione o círculo para falar"}
           </p>
         </div>
       </main>
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(-10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };

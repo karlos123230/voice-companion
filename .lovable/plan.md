@@ -1,5 +1,6 @@
 
 
+
 # Implementacao de Audio com Web Speech API
 
 Vou adicionar interacao de voz real ao JARVIS usando a Web Speech API nativa do navegador - reconhecimento de fala (Speech Recognition) e sintese de voz (Speech Synthesis).
@@ -110,4 +111,3 @@ speechSynthesis.speak(utterance);
 
 ### Selecao de Voz Portuguesa
 O sistema vai buscar vozes em portugues disponiveis e selecionar automaticamente a melhor opcao.
-
