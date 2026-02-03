@@ -8,7 +8,6 @@ const corsHeaders = {
 
 interface RequestBody {
   message: string;
-  device_id: string;
 }
 
 serve(async (req) => {
@@ -18,36 +17,73 @@ serve(async (req) => {
   }
 
   try {
-    const { message, device_id }: RequestBody = await req.json();
-
-    if (!message || !device_id) {
+    // Verify authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
-        JSON.stringify({ error: "message and device_id are required" }),
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Initialize Supabase client with user's auth
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Verify the token and get user
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("[JARVIS] Auth error:", claimsError);
+      return new Response(
+        JSON.stringify({ error: "Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const userId = claimsData.claims.sub as string;
+    const userEmail = claimsData.claims.email as string;
+
+    console.log(`[JARVIS] Processing message from user: ${userId}`);
+
+    const { message }: RequestBody = await req.json();
+
+    if (!message) {
+      return new Response(
+        JSON.stringify({ error: "message is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`[JARVIS] Processing message from device: ${device_id}`);
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    // Use service role client for database operations
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get or create user profile
     let profileData = await supabase
       .from("user_profiles")
       .select("*")
-      .eq("device_id", device_id)
+      .eq("user_id", userId)
       .single();
 
     let profile = profileData.data;
 
     if (profileData.error && profileData.error.code === "PGRST116") {
-      // Profile not found, create new one
+      // Profile not found, create new one with user's name from auth metadata
+      const { data: userData } = await userClient.auth.getUser(token);
+      const userName = userData?.user?.user_metadata?.name || null;
+      
       const newProfileResult = await supabase
         .from("user_profiles")
-        .insert({ device_id })
+        .insert({ 
+          user_id: userId,
+          name: userName,
+        })
         .select()
         .single();
 
@@ -56,7 +92,7 @@ serve(async (req) => {
         throw new Error("Failed to create user profile");
       }
       profile = newProfileResult.data;
-      console.log("[JARVIS] Created new profile:", profile.id);
+      console.log("[JARVIS] Created new profile:", profile.id, "for user:", userName);
     } else if (profileData.error) {
       console.error("[JARVIS] Error fetching profile:", profileData.error);
       throw new Error("Failed to fetch user profile");
@@ -110,6 +146,7 @@ Você conhece o usuário há algum tempo e são amigos. Você é genuíno, calor
 
 Informações sobre seu amigo:
 - Nome: ${userName || "ainda não sei o nome (pergunte de forma natural!)"}
+- Email: ${userEmail}
 - Interesses: ${userInterests.length > 0 ? userInterests.join(", ") : "ainda estou descobrindo"}
 - Notas pessoais: ${personalityNotes || "ainda conhecendo melhor"}
 

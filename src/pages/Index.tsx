@@ -1,10 +1,22 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import VoiceOrb from "@/components/VoiceOrb";
 import ConversationHistory from "@/components/ConversationHistory";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut, User } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const { user, isLoading: authLoading, signOut } = useAuth();
   const { state, transcript, response, error, isSupported, messages, startListening, stopListening, clearHistory } = useVoiceAssistant();
+
+  // Redirect to auth if not logged in
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/auth");
+    }
+  }, [user, authLoading, navigate]);
 
   const handleOrbPress = useCallback(() => {
     if (state === "idle") {
@@ -14,11 +26,50 @@ const Index = () => {
     }
   }, [state, startListening, stopListening]);
 
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  // Get user's name from metadata or email
+  const userName = user?.user_metadata?.name || user?.email?.split("@")[0] || "Usuário";
+
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-black">
+        <div 
+          className="text-primary text-xl"
+          style={{
+            textShadow: "0 0 20px hsl(185 100% 50% / 0.6)"
+          }}
+        >
+          Carregando...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
+      {/* User info and logout button */}
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-3">
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-black/50 backdrop-blur-sm border border-primary/30 rounded-md">
+          <User className="w-4 h-4 text-primary" />
+          <span className="text-sm text-primary">{userName}</span>
+        </div>
+        <button
+          onClick={handleSignOut}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs uppercase tracking-wider text-muted-foreground/60 hover:text-destructive border border-muted/30 hover:border-destructive/40 rounded-md transition-all duration-200 bg-black/50 backdrop-blur-sm"
+        >
+          <LogOut className="w-3 h-3" />
+          Sair
+        </button>
+      </div>
+
       {/* Browser compatibility warning */}
       {!isSupported && (
-        <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
+        <div className="absolute top-16 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
           <p className="text-destructive text-sm">
             Seu navegador não suporta reconhecimento de voz. Use Chrome, Safari ou Edge.
           </p>
@@ -27,7 +78,7 @@ const Index = () => {
 
       {/* Error message */}
       {error && (
-        <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
+        <div className="absolute top-16 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
           <p className="text-destructive text-sm">{error}</p>
         </div>
       )}
@@ -109,7 +160,7 @@ const Index = () => {
             {state === "listening" 
               ? "Estou ouvindo..." 
               : state === "processing"
-              ? "Processando..."
+              ? "Pensando..."
               : state === "responding"
               ? "Respondendo..."
               : "Pressione o círculo para falar"}
