@@ -1,9 +1,10 @@
 import { useCallback } from "react";
 import VoiceOrb from "@/components/VoiceOrb";
+import ConversationHistory from "@/components/ConversationHistory";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 
 const Index = () => {
-  const { state, transcript, response, error, isSupported, startListening, stopListening } = useVoiceAssistant();
+  const { state, transcript, response, error, isSupported, messages, startListening, stopListening, clearHistory } = useVoiceAssistant();
 
   const handleOrbPress = useCallback(() => {
     if (state === "idle") {
@@ -29,6 +30,22 @@ const Index = () => {
         <div className="absolute top-4 left-4 right-4 bg-destructive/20 border border-destructive/40 rounded-lg p-4 text-center">
           <p className="text-destructive text-sm">{error}</p>
         </div>
+      )}
+
+      {/* Conversation History */}
+      <ConversationHistory 
+        messages={messages} 
+        isVisible={messages.length > 0 && state === "idle"}
+      />
+
+      {/* Clear history button */}
+      {messages.length > 0 && state === "idle" && (
+        <button
+          onClick={clearHistory}
+          className="absolute top-20 right-4 z-20 px-3 py-1.5 text-xs uppercase tracking-wider text-muted-foreground/60 hover:text-primary border border-muted/30 hover:border-primary/40 rounded-md transition-all duration-200 bg-black/50 backdrop-blur-sm"
+        >
+          Limpar
+        </button>
       )}
 
       {/* Main content */}
