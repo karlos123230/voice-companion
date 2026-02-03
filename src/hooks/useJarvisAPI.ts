@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getDeviceId } from "@/lib/deviceId";
 
 interface JarvisResponse {
   response: string;
@@ -33,14 +32,19 @@ export const useJarvisAPI = (): UseJarvisAPIReturn => {
     setError(null);
 
     try {
-      const deviceId = getDeviceId();
+      // Get current session for auth token
+      const { data: { session } } = await supabase.auth.getSession();
       
+      if (!session) {
+        throw new Error("Você precisa estar logado para conversar com o JARVIS");
+      }
+
       console.log("[JARVIS API] Sending message:", message);
       
       const { data, error: functionError } = await supabase.functions.invoke<JarvisResponse>(
         "jarvis-chat",
         {
-          body: { message, device_id: deviceId },
+          body: { message },
         }
       );
 

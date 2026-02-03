@@ -52,33 +52,36 @@ export type Database = {
       user_profiles: {
         Row: {
           created_at: string
-          device_id: string
+          device_id: string | null
           id: string
           interests: string[] | null
           name: string | null
           personality_notes: string | null
           preferences: Json | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
-          device_id: string
+          device_id?: string | null
           id?: string
           interests?: string[] | null
           name?: string | null
           personality_notes?: string | null
           preferences?: Json | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
-          device_id?: string
+          device_id?: string | null
           id?: string
           interests?: string[] | null
           name?: string | null
           personality_notes?: string | null
           preferences?: Json | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
