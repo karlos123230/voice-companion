@@ -1,113 +1,73 @@
 
 
+# Correção do Sistema de Voz do JARVIS
 
-# Implementacao de Audio com Web Speech API
+## Problemas Identificados
 
-Vou adicionar interacao de voz real ao JARVIS usando a Web Speech API nativa do navegador - reconhecimento de fala (Speech Recognition) e sintese de voz (Speech Synthesis).
+1. **Ordem de prioridade das respostas**: A frase "Olá Jarvis que horas são" está retornando "Olá! Como posso ajudar?" em vez de dizer as horas, porque a verificação de "olá" vem antes de "horas"
 
----
-
-## Como vai funcionar
-
-1. **Usuario toca no orbe** - O app comeca a ouvir
-2. **Usuario fala** - O texto e capturado em tempo real
-3. **Usuario para de falar** - O app processa e responde
-4. **JARVIS fala** - A resposta e lida em voz alta
+2. **Síntese de voz pode não estar funcionando**: A Web Speech API no iOS/Safari pode ter problemas se não houver interação do usuário antes do speak()
 
 ---
 
-## Arquivos a criar/modificar
+## Correções Necessárias
 
-### 1. Novo Hook: `useSpeechRecognition.ts`
-Gerencia o reconhecimento de fala com a Web Speech API:
-- Detecta automaticamente quando o usuario para de falar
-- Suporta portugues brasileiro (pt-BR)
-- Trata erros de permissao de microfone
-
-### 2. Novo Hook: `useSpeechSynthesis.ts`
-Gerencia a sintese de voz (text-to-speech):
-- Seleciona voz em portugues automaticamente
-- Controla volume, velocidade e tom
-- Detecta quando termina de falar
-
-### 3. Atualizar: `useVoiceAssistant.ts`
-Integra os dois hooks e gerencia o fluxo completo:
-- Inicia gravacao ao pressionar
-- Processa o texto reconhecido
-- Gera resposta (inicialmente simples, preparado para IA)
-- Fala a resposta
-
-### 4. Atualizar: `Index.tsx`
-- Mostra o texto transcrito em tempo real
-- Mostra a resposta do assistente
-- Feedback visual de permissao de microfone
-
----
-
-## Fluxo de Estados
+### 1. Reordenar Lógica de Respostas
+Priorizar perguntas específicas (hora, data) sobre saudações genéricas:
 
 ```text
-[idle] --> usuario clica --> [listening]
-                                  |
-                         usuario fala...
-                                  |
-                         para de falar
-                                  |
-                             [processing]
-                                  |
-                          gera resposta
-                                  |
-                            [responding]
-                                  |
-                         JARVIS fala resposta
-                                  |
-                         termina de falar
-                                  |
-                               [idle]
+Ordem atual:          Ordem corrigida:
+1. Saudações          1. Hora/Data (específico)
+2. Hora               2. Quem é você
+3. Data               3. Ajuda
+4. Tempo              4. Saudações (genérico)
+5. Quem é você        5. Obrigado
+6. ...                6. Default
 ```
 
----
+### 2. Corrigir Síntese de Voz para Mobile
+- Adicionar verificação de carregamento de vozes
+- Usar timeout de segurança caso onend não dispare
+- Adicionar logs para debug
+- Garantir que speak() é chamado em contexto de interação do usuário
 
-## Respostas do JARVIS
-
-Inicialmente, o JARVIS vai responder com frases pre-definidas inteligentes baseadas em palavras-chave:
-- "Ola" -> "Ola! Como posso ajudar?"
-- "Hora" -> Diz a hora atual
-- "Data" -> Diz a data atual
-- Outras -> "Desculpe, ainda estou aprendendo. Pode repetir?"
-
-Isso fica preparado para futura integracao com IA.
+### 3. Adicionar Try-Catch e Logs
+Adicionar tratamento de erros em todas as operações assíncronas para evitar crashes silenciosos
 
 ---
 
-## Compatibilidade
+## Arquivos a Modificar
 
-A Web Speech API funciona em:
-- Chrome (desktop e Android)
-- Safari (macOS e iOS)
-- Edge
+### `useVoiceAssistant.ts`
+- Reordenar a função `generateResponse()` para priorizar perguntas específicas
+- Adicionar tratamento de erros com try-catch
+- Adicionar logs para debug
 
-Nota: Firefox tem suporte limitado. Vou adicionar deteccao e mensagem amigavel.
+### `useSpeechSynthesis.ts`
+- Adicionar timeout de segurança para resetar isSpeaking
+- Melhorar detecção de erros
+- Adicionar log do erro específico
+
+### `Index.tsx` (opcional)
+- Exibir estado de debug em desenvolvimento
 
 ---
 
-## Secao Tecnica
+## Detalhes Técnicos
 
-### Speech Recognition
+### Problema de Prioridade
+O texto "Olá Jarvis que horas são" contém tanto "olá" quanto "horas". Como a verificação de "olá" vem primeiro no código, ela sempre ganha:
+
 ```typescript
-const recognition = new webkitSpeechRecognition();
-recognition.lang = 'pt-BR';
-recognition.continuous = true;
-recognition.interimResults = true;
+// ANTES - Saudação vem primeiro
+if (text.includes("olá")) return "Olá!...";  // ← Match aqui
+if (text.includes("hora")) return "São X horas"; // ← Nunca chega
+
+// DEPOIS - Perguntas específicas primeiro
+if (text.includes("hora")) return "São X horas"; // ← Match primeiro
+if (text.includes("olá")) return "Olá!...";  
 ```
 
-### Speech Synthesis
-```typescript
-const utterance = new SpeechSynthesisUtterance(text);
-utterance.lang = 'pt-BR';
-utterance.rate = 1.0;
-speechSynthesis.speak(utterance);
-```
+### Problema de Síntese no iOS
+O Safari/iOS pode bloquear speechSynthesis.speak() se não estiver em um handler de evento do usuário. A solução é garantir que toda a cadeia de chamadas está dentro do evento de click.
 
-### Selecao de Voz Portuguesa
-O sistema vai buscar vozes em portugues disponiveis e selecionar automaticamente a melhor opcao.
