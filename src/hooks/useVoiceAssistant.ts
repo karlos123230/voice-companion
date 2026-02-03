@@ -14,6 +14,7 @@ interface UseVoiceAssistantReturn {
 }
 
 // Generate JARVIS response based on user input
+// PRIORITY: Specific questions first, then greetings
 const generateResponse = (input: string): string => {
   const text = input.toLowerCase().trim();
   
@@ -21,12 +22,7 @@ const generateResponse = (input: string): string => {
     return "Não consegui ouvir. Pode repetir, por favor?";
   }
   
-  // Greeting
-  if (text.includes("olá") || text.includes("ola") || text.includes("oi") || text.includes("bom dia") || text.includes("boa tarde") || text.includes("boa noite")) {
-    return "Olá! Como posso ajudar você hoje?";
-  }
-  
-  // Time
+  // PRIORITY 1: Time (most specific)
   if (text.includes("hora") || text.includes("horas") || text.includes("que horas")) {
     const now = new Date();
     const hours = now.getHours();
@@ -34,7 +30,7 @@ const generateResponse = (input: string): string => {
     return `São ${hours} horas e ${minutes} minutos.`;
   }
   
-  // Date
+  // PRIORITY 2: Date (specific)
   if (text.includes("data") || text.includes("dia") || text.includes("que dia")) {
     const now = new Date();
     const options: Intl.DateTimeFormatOptions = { 
@@ -47,24 +43,29 @@ const generateResponse = (input: string): string => {
     return `Hoje é ${dateStr}.`;
   }
   
-  // Weather (placeholder)
-  if (text.includes("tempo") || text.includes("clima") || text.includes("previsão")) {
-    return "Desculpe, ainda não tenho acesso às informações meteorológicas. Mas posso ajudar com outras coisas!";
-  }
-  
-  // Who are you
+  // PRIORITY 3: Who are you (specific)
   if (text.includes("quem é você") || text.includes("quem e voce") || text.includes("seu nome") || text.includes("você é")) {
     return "Eu sou JARVIS, seu assistente virtual. Estou aqui para ajudar você!";
   }
   
-  // Thank you
-  if (text.includes("obrigado") || text.includes("obrigada") || text.includes("valeu")) {
-    return "Por nada! Estou sempre à disposição.";
-  }
-  
-  // Help
+  // PRIORITY 4: Help (specific)
   if (text.includes("ajuda") || text.includes("ajudar") || text.includes("o que você faz")) {
     return "Posso informar a hora, a data, responder a saudações e manter uma conversa básica. Em breve terei mais capacidades!";
+  }
+  
+  // PRIORITY 5: Weather (placeholder)
+  if (text.includes("tempo") || text.includes("clima") || text.includes("previsão")) {
+    return "Desculpe, ainda não tenho acesso às informações meteorológicas. Mas posso ajudar com outras coisas!";
+  }
+  
+  // PRIORITY 6: Greetings (generic - checked AFTER specific questions)
+  if (text.includes("olá") || text.includes("ola") || text.includes("oi") || text.includes("bom dia") || text.includes("boa tarde") || text.includes("boa noite")) {
+    return "Olá! Como posso ajudar você hoje?";
+  }
+  
+  // PRIORITY 7: Thank you
+  if (text.includes("obrigado") || text.includes("obrigada") || text.includes("valeu")) {
+    return "Por nada! Estou sempre à disposição.";
   }
   
   // Default response
