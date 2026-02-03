@@ -3,6 +3,7 @@ import type { VoiceState } from "@/components/VoiceOrb";
 import type { Message } from "@/components/ConversationHistory";
 import { useSpeechRecognition } from "./useSpeechRecognition";
 import { useSpeechSynthesis } from "./useSpeechSynthesis";
+import { useJarvisAPI } from "./useJarvisAPI";
 
 interface UseVoiceAssistantReturn {
   state: VoiceState;
@@ -15,65 +16,6 @@ interface UseVoiceAssistantReturn {
   stopListening: () => void;
   clearHistory: () => void;
 }
-
-// Generate JARVIS response based on user input
-// PRIORITY: Specific questions first, then greetings
-const generateResponse = (input: string): string => {
-  const text = input.toLowerCase().trim();
-  
-  if (!text) {
-    return "Não consegui ouvir. Pode repetir, por favor?";
-  }
-  
-  // PRIORITY 1: Time (most specific)
-  if (text.includes("hora") || text.includes("horas") || text.includes("que horas")) {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    return `São ${hours} horas e ${minutes} minutos.`;
-  }
-  
-  // PRIORITY 2: Date (specific)
-  if (text.includes("data") || text.includes("dia") || text.includes("que dia")) {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    };
-    const dateStr = now.toLocaleDateString('pt-BR', options);
-    return `Hoje é ${dateStr}.`;
-  }
-  
-  // PRIORITY 3: Who are you (specific)
-  if (text.includes("quem é você") || text.includes("quem e voce") || text.includes("seu nome") || text.includes("você é")) {
-    return "Eu sou JARVIS, seu assistente virtual. Estou aqui para ajudar você!";
-  }
-  
-  // PRIORITY 4: Help (specific)
-  if (text.includes("ajuda") || text.includes("ajudar") || text.includes("o que você faz")) {
-    return "Posso informar a hora, a data, responder a saudações e manter uma conversa básica. Em breve terei mais capacidades!";
-  }
-  
-  // PRIORITY 5: Weather (placeholder)
-  if (text.includes("tempo") || text.includes("clima") || text.includes("previsão")) {
-    return "Desculpe, ainda não tenho acesso às informações meteorológicas. Mas posso ajudar com outras coisas!";
-  }
-  
-  // PRIORITY 6: Greetings (generic - checked AFTER specific questions)
-  if (text.includes("olá") || text.includes("ola") || text.includes("oi") || text.includes("bom dia") || text.includes("boa tarde") || text.includes("boa noite")) {
-    return "Olá! Como posso ajudar você hoje?";
-  }
-  
-  // PRIORITY 7: Thank you
-  if (text.includes("obrigado") || text.includes("obrigada") || text.includes("valeu")) {
-    return "Por nada! Estou sempre à disposição.";
-  }
-  
-  // Default response
-  return "Interessante! Ainda estou aprendendo. Pode me perguntar sobre a hora, data, ou apenas conversar comigo.";
-};
 
 export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
   const [state, setState] = useState<VoiceState>("idle");
@@ -98,6 +40,8 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     speak,
     activate: activateSynthesis,
   } = useSpeechSynthesis();
+
+  const { sendMessage, isLoading, error: apiError } = useJarvisAPI();
 
   const isSupported = recognitionSupported && synthesisSupported;
 
@@ -124,8 +68,8 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     setMessages([]);
   }, []);
 
-  // Process and respond to user input
-  const processAndRespond = useCallback((text: string) => {
+  // Process and respond to user input using AI
+  const processAndRespond = useCallback(async (text: string) => {
     if (!text.trim()) {
       setState("idle");
       return;
@@ -136,18 +80,27 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     
     setState("processing");
     
-    // Generate response immediately (no delay)
-    const responseText = generateResponse(text);
-    setResponse(responseText);
-    
-    // Add assistant message to history
-    addMessage("assistant", responseText);
-    
-    setState("responding");
-    
-    console.log("[JARVIS] Calling speak with:", responseText);
-    speak(responseText);
-  }, [speak, addMessage]);
+    try {
+      // Call the AI API
+      const responseText = await sendMessage(text.trim());
+      setResponse(responseText);
+      
+      // Add assistant message to history
+      addMessage("assistant", responseText);
+      
+      setState("responding");
+      
+      console.log("[JARVIS] Speaking response:", responseText);
+      speak(responseText);
+    } catch (error) {
+      console.error("[JARVIS] Error processing message:", error);
+      const fallbackResponse = "Desculpe, tive um problema. Pode repetir?";
+      setResponse(fallbackResponse);
+      addMessage("assistant", fallbackResponse);
+      setState("responding");
+      speak(fallbackResponse);
+    }
+  }, [sendMessage, speak, addMessage]);
 
   // Auto-detect silence and process speech
   useEffect(() => {
@@ -199,11 +152,14 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     processAndRespond(textToProcess);
   }, [stopRecognition, transcript, processAndRespond]);
 
+  // Combine errors
+  const error = recognitionError || apiError;
+
   return {
     state,
     transcript: transcript + interimTranscript,
     response,
-    error: recognitionError,
+    error,
     isSupported,
     messages,
     startListening,
