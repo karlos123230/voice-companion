@@ -9,23 +9,21 @@ interface VoiceOrbProps {
   assistantName?: string;
 }
 
-// T-shaped marker component for the outer ring
-const TMarker = ({ angle }: { angle: number }) => {
-  const isVertical = angle === 0 || angle === 180;
-  
+// Cross marker component (+) for the outer ring
+const CrossMarker = ({ angle }: { angle: number }) => {
   return (
     <div
       className="absolute"
       style={{
-        left: `${50 + 47 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
-        top: `${50 + 47 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
-        transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+        left: `${50 + 50 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
+        top: `${50 + 50 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
+        transform: `translate(-50%, -50%)`,
       }}
     >
-      {/* Vertical line of T */}
-      <div className="absolute w-[2px] h-4 bg-primary/80 -translate-x-1/2" style={{ top: '-16px' }} />
-      {/* Horizontal line of T */}
-      <div className="absolute w-4 h-[2px] bg-primary/80 -translate-x-1/2 -translate-y-1/2" style={{ top: '-16px' }} />
+      {/* Vertical line */}
+      <div className="absolute w-[1px] h-5 bg-primary left-1/2 -translate-x-1/2 -translate-y-1/2" />
+      {/* Horizontal line */}
+      <div className="absolute w-5 h-[1px] bg-primary top-1/2 -translate-y-1/2 -translate-x-1/2" />
     </div>
   );
 };
@@ -46,44 +44,44 @@ const VoiceOrb = ({
   return (
     <div className="relative flex flex-col items-center justify-center">
       {/* Outer container with all rings */}
-      <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
+      <div className="relative w-80 h-80 md:w-[400px] md:h-[400px] flex items-center justify-center">
         
-        {/* Ring 1 - Outermost with T markers */}
+        {/* Ring 1 - Outermost with cross markers */}
         <div 
           className={cn(
-            "absolute w-full h-full rounded-full border border-primary/40",
+            "absolute w-full h-full rounded-full border border-primary/60",
             state === "listening" && "animate-jarvis-ring-expand"
           )}
         >
-          {/* T-shaped markers at cardinal positions */}
+          {/* Cross markers at cardinal positions */}
           {[0, 90, 180, 270].map((angle) => (
-            <TMarker key={angle} angle={angle} />
+            <CrossMarker key={angle} angle={angle} />
           ))}
         </div>
 
         {/* Ring 2 */}
         <div 
           className={cn(
-            "absolute w-[85%] h-[85%] rounded-full border border-primary/35",
+            "absolute w-[82%] h-[82%] rounded-full border border-primary/50",
             state === "processing" && "animate-jarvis-spin"
           )}
         />
 
         {/* Ring 3 */}
         <div 
-          className="absolute w-[70%] h-[70%] rounded-full border border-primary/30"
+          className="absolute w-[65%] h-[65%] rounded-full border border-primary/40"
         />
 
         {/* Ring 4 - Inner ring */}
         <div 
-          className="absolute w-[55%] h-[55%] rounded-full border border-primary/25"
+          className="absolute w-[50%] h-[50%] rounded-full border border-primary/30"
         />
 
-        {/* Central Orb - Dark sphere with cyan glow */}
+        {/* Central Orb - Dark sphere with intense cyan glow at bottom */}
         <button
           onClick={handlePress}
           className={cn(
-            "absolute w-[42%] h-[42%] rounded-full cursor-pointer",
+            "absolute w-[38%] h-[38%] rounded-full cursor-pointer",
             "flex items-center justify-center",
             "transition-all duration-300",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -91,19 +89,25 @@ const VoiceOrb = ({
             isPressed && "scale-95"
           )}
           style={{
-            background: "radial-gradient(circle at 50% 30%, hsl(200 30% 15%) 0%, hsl(220 20% 6%) 60%, hsl(220 20% 4%) 100%)",
+            background: `
+              radial-gradient(ellipse 100% 80% at 50% 100%, hsl(185 100% 45% / 0.6) 0%, transparent 50%),
+              radial-gradient(ellipse 80% 50% at 50% 0%, hsl(200 20% 20% / 0.8) 0%, transparent 50%),
+              radial-gradient(circle at 50% 50%, hsl(200 30% 12%) 0%, hsl(220 25% 8%) 50%, hsl(220 20% 5%) 100%)
+            `,
             boxShadow: state === "listening" 
               ? `
-                0 20px 40px -10px hsl(var(--jarvis-glow) / 0.6),
-                0 30px 60px -10px hsl(var(--jarvis-glow) / 0.4),
-                inset 0 -20px 40px -20px hsl(var(--jarvis-glow) / 0.3)
+                0 25px 50px -10px hsl(185 100% 50% / 0.7),
+                0 40px 80px -20px hsl(185 100% 50% / 0.5),
+                0 0 80px 20px hsl(185 100% 50% / 0.2),
+                inset 0 -30px 50px -20px hsl(185 100% 50% / 0.4)
               `
               : `
-                0 15px 30px -5px hsl(var(--jarvis-glow) / 0.4),
-                0 25px 50px -10px hsl(var(--jarvis-glow) / 0.25),
-                inset 0 -15px 30px -15px hsl(var(--jarvis-glow) / 0.2)
+                0 20px 40px -10px hsl(185 100% 50% / 0.5),
+                0 30px 60px -15px hsl(185 100% 50% / 0.35),
+                0 0 60px 10px hsl(185 100% 50% / 0.15),
+                inset 0 -25px 40px -15px hsl(185 100% 50% / 0.3)
               `,
-            border: "1px solid hsl(var(--primary) / 0.3)"
+            border: "1px solid hsl(185 80% 40% / 0.4)"
           }}
         >
           {/* Orb inner content */}
@@ -111,7 +115,12 @@ const VoiceOrb = ({
             {state === "responding" ? (
               <AudioWaveform />
             ) : (
-              <span className="text-primary font-light text-sm md:text-base tracking-[0.4em] uppercase">
+              <span 
+                className="text-primary font-normal text-base md:text-lg tracking-[0.3em] uppercase"
+                style={{
+                  textShadow: "0 0 20px hsl(185 100% 50% / 0.8), 0 0 40px hsl(185 100% 50% / 0.4)"
+                }}
+              >
                 {assistantName}
               </span>
             )}
@@ -121,9 +130,9 @@ const VoiceOrb = ({
         {/* Sound wave ripples when listening */}
         {state === "listening" && (
           <>
-            <div className="absolute w-[50%] h-[50%] rounded-full border border-primary/30 animate-jarvis-ripple" />
+            <div className="absolute w-[45%] h-[45%] rounded-full border border-primary/30 animate-jarvis-ripple" />
             <div 
-              className="absolute w-[50%] h-[50%] rounded-full border border-primary/20 animate-jarvis-ripple"
+              className="absolute w-[45%] h-[45%] rounded-full border border-primary/20 animate-jarvis-ripple"
               style={{ animationDelay: "0.5s" }}
             />
           </>

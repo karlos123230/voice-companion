@@ -24,7 +24,7 @@ const Index = () => {
   }, [state, startListening, stopListening]);
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background overflow-hidden">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-black overflow-hidden">
       {/* Main content */}
       <main className="relative z-10 flex flex-col items-center justify-center px-4">
         {/* Voice Orb */}
@@ -34,9 +34,15 @@ const Index = () => {
           assistantName="JARVIS"
         />
 
-        {/* Bottom instruction - Large cyan text */}
-        <div className="mt-16 md:mt-20 text-center">
-          <p className="text-primary text-lg md:text-xl tracking-wide">
+        {/* Bottom instruction - Stylized cyan text */}
+        <div className="mt-20 md:mt-24 text-center">
+          <p 
+            className="text-primary text-xl md:text-2xl italic tracking-wide"
+            style={{
+              fontFamily: "'Segoe UI', system-ui, sans-serif",
+              textShadow: "0 0 20px hsl(185 100% 50% / 0.6), 0 0 40px hsl(185 100% 50% / 0.3)"
+            }}
+          >
             Pressione o círculo para falar
           </p>
         </div>
