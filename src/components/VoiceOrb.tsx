@@ -9,6 +9,27 @@ interface VoiceOrbProps {
   assistantName?: string;
 }
 
+// T-shaped marker component for the outer ring
+const TMarker = ({ angle }: { angle: number }) => {
+  const isVertical = angle === 0 || angle === 180;
+  
+  return (
+    <div
+      className="absolute"
+      style={{
+        left: `${50 + 47 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
+        top: `${50 + 47 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
+        transform: `translate(-50%, -50%) rotate(${angle}deg)`,
+      }}
+    >
+      {/* Vertical line of T */}
+      <div className="absolute w-[2px] h-4 bg-primary/80 -translate-x-1/2" style={{ top: '-16px' }} />
+      {/* Horizontal line of T */}
+      <div className="absolute w-4 h-[2px] bg-primary/80 -translate-x-1/2 -translate-y-1/2" style={{ top: '-16px' }} />
+    </div>
+  );
+};
+
 const VoiceOrb = ({ 
   state = "idle", 
   onPress, 
@@ -22,116 +43,67 @@ const VoiceOrb = ({
     setTimeout(() => setIsPressed(false), 150);
   };
 
-  const getStateText = () => {
-    switch (state) {
-      case "listening":
-        return "Ouvindo...";
-      case "processing":
-        return "Processando...";
-      case "responding":
-        return "Respondendo...";
-      default:
-        return "Toque para falar";
-    }
-  };
-
   return (
-    <div className="relative flex flex-col items-center justify-center gap-8">
+    <div className="relative flex flex-col items-center justify-center">
       {/* Outer container with all rings */}
-      <div className="relative w-80 h-80 md:w-96 md:h-96 flex items-center justify-center">
+      <div className="relative w-72 h-72 md:w-80 md:h-80 flex items-center justify-center">
         
-        {/* Outermost ring with markers */}
+        {/* Ring 1 - Outermost with T markers */}
         <div 
           className={cn(
-            "absolute w-full h-full rounded-full border border-primary/30",
-            state === "idle" && "animate-jarvis-breathe",
+            "absolute w-full h-full rounded-full border border-primary/40",
             state === "listening" && "animate-jarvis-ring-expand"
           )}
         >
-          {/* HUD Markers */}
-          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => (
-            <div
-              key={angle}
-              className="absolute w-2 h-2 bg-primary/60 rounded-full"
-              style={{
-                left: `${50 + 48 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
-                top: `${50 + 48 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Second ring - rotating */}
-        <div 
-          className={cn(
-            "absolute w-[85%] h-[85%] rounded-full border border-primary/40",
-            state === "processing" ? "animate-jarvis-spin" : "animate-jarvis-rotate"
-          )}
-        >
-          {/* Accent marks */}
+          {/* T-shaped markers at cardinal positions */}
           {[0, 90, 180, 270].map((angle) => (
-            <div
-              key={angle}
-              className="absolute w-3 h-1 bg-primary/80 rounded-full"
-              style={{
-                left: `${50 + 46 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
-                top: `${50 + 46 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
-                transform: `translate(-50%, -50%) rotate(${angle}deg)`,
-              }}
-            />
+            <TMarker key={angle} angle={angle} />
           ))}
         </div>
 
-        {/* Third ring - counter rotating */}
+        {/* Ring 2 */}
         <div 
           className={cn(
-            "absolute w-[70%] h-[70%] rounded-full border border-primary/50",
-            "animate-jarvis-rotate-reverse"
-          )}
-        >
-          {/* Small dots */}
-          {[30, 150, 270].map((angle) => (
-            <div
-              key={angle}
-              className="absolute w-1.5 h-1.5 bg-primary rounded-full"
-              style={{
-                left: `${50 + 46 * Math.cos((angle - 90) * (Math.PI / 180))}%`,
-                top: `${50 + 46 * Math.sin((angle - 90) * (Math.PI / 180))}%`,
-                transform: "translate(-50%, -50%)",
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Inner glow ring */}
-        <div 
-          className={cn(
-            "absolute w-[55%] h-[55%] rounded-full",
-            "bg-gradient-to-br from-primary/10 to-transparent",
-            "border border-primary/60",
-            state === "listening" && "animate-jarvis-ring-expand"
+            "absolute w-[85%] h-[85%] rounded-full border border-primary/35",
+            state === "processing" && "animate-jarvis-spin"
           )}
         />
 
-        {/* Central Orb - Interactive */}
+        {/* Ring 3 */}
+        <div 
+          className="absolute w-[70%] h-[70%] rounded-full border border-primary/30"
+        />
+
+        {/* Ring 4 - Inner ring */}
+        <div 
+          className="absolute w-[55%] h-[55%] rounded-full border border-primary/25"
+        />
+
+        {/* Central Orb - Dark sphere with cyan glow */}
         <button
           onClick={handlePress}
           className={cn(
-            "absolute w-[40%] h-[40%] rounded-full cursor-pointer",
-            "bg-gradient-to-br from-jarvis-orb-start to-jarvis-orb-end",
+            "absolute w-[42%] h-[42%] rounded-full cursor-pointer",
             "flex items-center justify-center",
             "transition-all duration-300",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            state === "idle" && "animate-jarvis-glow-pulse",
             state === "listening" && "animate-jarvis-listening",
-            state === "processing" && "animate-jarvis-glow-pulse",
             isPressed && "scale-95"
           )}
           style={{
+            background: "radial-gradient(circle at 50% 30%, hsl(200 30% 15%) 0%, hsl(220 20% 6%) 60%, hsl(220 20% 4%) 100%)",
             boxShadow: state === "listening" 
-              ? "0 0 60px hsl(var(--jarvis-glow-intense) / 0.8), 0 0 100px hsl(var(--jarvis-glow) / 0.5)"
-              : "0 0 30px hsl(var(--jarvis-glow) / 0.5), 0 0 60px hsl(var(--jarvis-glow) / 0.25)"
+              ? `
+                0 20px 40px -10px hsl(var(--jarvis-glow) / 0.6),
+                0 30px 60px -10px hsl(var(--jarvis-glow) / 0.4),
+                inset 0 -20px 40px -20px hsl(var(--jarvis-glow) / 0.3)
+              `
+              : `
+                0 15px 30px -5px hsl(var(--jarvis-glow) / 0.4),
+                0 25px 50px -10px hsl(var(--jarvis-glow) / 0.25),
+                inset 0 -15px 30px -15px hsl(var(--jarvis-glow) / 0.2)
+              `,
+            border: "1px solid hsl(var(--primary) / 0.3)"
           }}
         >
           {/* Orb inner content */}
@@ -139,7 +111,7 @@ const VoiceOrb = ({
             {state === "responding" ? (
               <AudioWaveform />
             ) : (
-              <span className="text-primary-foreground font-bold text-sm md:text-base tracking-widest">
+              <span className="text-primary font-light text-sm md:text-base tracking-[0.4em] uppercase">
                 {assistantName}
               </span>
             )}
@@ -149,19 +121,14 @@ const VoiceOrb = ({
         {/* Sound wave ripples when listening */}
         {state === "listening" && (
           <>
-            <div className="absolute w-[50%] h-[50%] rounded-full border border-primary/40 animate-jarvis-ripple" />
+            <div className="absolute w-[50%] h-[50%] rounded-full border border-primary/30 animate-jarvis-ripple" />
             <div 
-              className="absolute w-[50%] h-[50%] rounded-full border border-primary/30 animate-jarvis-ripple"
+              className="absolute w-[50%] h-[50%] rounded-full border border-primary/20 animate-jarvis-ripple"
               style={{ animationDelay: "0.5s" }}
             />
           </>
         )}
       </div>
-
-      {/* Status text */}
-      <p className="text-muted-foreground text-sm md:text-base tracking-wide animate-pulse">
-        {getStateText()}
-      </p>
     </div>
   );
 };
@@ -173,7 +140,7 @@ const AudioWaveform = () => {
       {[0, 1, 2, 3, 4].map((i) => (
         <div
           key={i}
-          className="w-1 bg-primary-foreground rounded-full"
+          className="w-1 bg-primary rounded-full"
           style={{
             animation: "jarvis-wave 0.8s ease-in-out infinite",
             animationDelay: `${i * 0.1}s`,
