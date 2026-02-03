@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { VoiceState } from "@/components/VoiceOrb";
+import type { Message } from "@/components/ConversationHistory";
 import { useSpeechRecognition } from "./useSpeechRecognition";
 import { useSpeechSynthesis } from "./useSpeechSynthesis";
 
@@ -9,8 +10,10 @@ interface UseVoiceAssistantReturn {
   response: string;
   error: string | null;
   isSupported: boolean;
+  messages: Message[];
   startListening: () => void;
   stopListening: () => void;
+  clearHistory: () => void;
 }
 
 // Generate JARVIS response based on user input
@@ -75,6 +78,7 @@ const generateResponse = (input: string): string => {
 export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
   const [state, setState] = useState<VoiceState>("idle");
   const [response, setResponse] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef("");
   
@@ -104,6 +108,22 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     }
   }, [isSpeaking, state]);
 
+  // Add message to history
+  const addMessage = useCallback((type: "user" | "assistant", text: string) => {
+    const newMessage: Message = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type,
+      text,
+      timestamp: new Date(),
+    };
+    setMessages((prev) => [...prev, newMessage]);
+  }, []);
+
+  // Clear conversation history
+  const clearHistory = useCallback(() => {
+    setMessages([]);
+  }, []);
+
   // Process and respond to user input
   const processAndRespond = useCallback((text: string) => {
     if (!text.trim()) {
@@ -111,16 +131,23 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       return;
     }
     
+    // Add user message to history
+    addMessage("user", text.trim());
+    
     setState("processing");
     
     // Generate response immediately (no delay)
     const responseText = generateResponse(text);
     setResponse(responseText);
+    
+    // Add assistant message to history
+    addMessage("assistant", responseText);
+    
     setState("responding");
     
     console.log("[JARVIS] Calling speak with:", responseText);
     speak(responseText);
-  }, [speak]);
+  }, [speak, addMessage]);
 
   // Auto-detect silence and process speech
   useEffect(() => {
@@ -178,7 +205,9 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     response,
     error: recognitionError,
     isSupported,
+    messages,
     startListening,
     stopListening,
+    clearHistory,
   };
 };
