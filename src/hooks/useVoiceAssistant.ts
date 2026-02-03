@@ -92,6 +92,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     isSpeaking,
     isSupported: synthesisSupported,
     speak,
+    activate: activateSynthesis,
   } = useSpeechSynthesis();
 
   const isSupported = recognitionSupported && synthesisSupported;
@@ -102,6 +103,24 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       setState("idle");
     }
   }, [isSpeaking, state]);
+
+  // Process and respond to user input
+  const processAndRespond = useCallback((text: string) => {
+    if (!text.trim()) {
+      setState("idle");
+      return;
+    }
+    
+    setState("processing");
+    
+    // Generate response immediately (no delay)
+    const responseText = generateResponse(text);
+    setResponse(responseText);
+    setState("responding");
+    
+    console.log("[JARVIS] Calling speak with:", responseText);
+    speak(responseText);
+  }, [speak]);
 
   // Auto-detect silence and process speech
   useEffect(() => {
@@ -121,15 +140,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       silenceTimeoutRef.current = setTimeout(() => {
         // User stopped speaking - process the input
         stopRecognition();
-        setState("processing");
-        
-        // Small delay before responding
-        setTimeout(() => {
-          const responseText = generateResponse(lastTranscriptRef.current);
-          setResponse(responseText);
-          setState("responding");
-          speak(responseText);
-        }, 500);
+        processAndRespond(lastTranscriptRef.current);
       }, 1500); // 1.5 seconds of silence
     }
     
@@ -138,14 +149,17 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
         clearTimeout(silenceTimeoutRef.current);
       }
     };
-  }, [isListening, transcript, interimTranscript, stopRecognition, speak]);
+  }, [isListening, transcript, interimTranscript, stopRecognition, processAndRespond]);
 
   const startListening = useCallback(() => {
+    // Activate speech synthesis on first interaction (iOS workaround)
+    activateSynthesis();
+    
     setResponse("");
     lastTranscriptRef.current = "";
     setState("listening");
     startRecognition();
-  }, [startRecognition]);
+  }, [startRecognition, activateSynthesis]);
 
   const stopListening = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -155,20 +169,8 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     stopRecognition();
     
     const textToProcess = lastTranscriptRef.current || transcript;
-    
-    if (textToProcess.trim()) {
-      setState("processing");
-      
-      setTimeout(() => {
-        const responseText = generateResponse(textToProcess);
-        setResponse(responseText);
-        setState("responding");
-        speak(responseText);
-      }, 500);
-    } else {
-      setState("idle");
-    }
-  }, [stopRecognition, transcript, speak]);
+    processAndRespond(textToProcess);
+  }, [stopRecognition, transcript, processAndRespond]);
 
   return {
     state,

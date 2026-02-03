@@ -5,11 +5,13 @@ interface UseSpeechSynthesisReturn {
   isSupported: boolean;
   speak: (text: string) => void;
   cancel: () => void;
+  activate: () => void;
 }
 
 export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const hasActivatedRef = useRef(false);
   
   const isSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
@@ -49,6 +51,19 @@ export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
     };
   }, [isSupported]);
 
+  // Activate speech synthesis on first user interaction (iOS workaround)
+  const activateSpeechSynthesis = useCallback(() => {
+    if (hasActivatedRef.current || !isSupported) return;
+    
+    // Create a silent utterance to "unlock" audio on iOS
+    const silentUtterance = new SpeechSynthesisUtterance("");
+    silentUtterance.volume = 0;
+    speechSynthesis.speak(silentUtterance);
+    speechSynthesis.cancel();
+    hasActivatedRef.current = true;
+    console.log("[JARVIS] Speech synthesis activated");
+  }, [isSupported]);
+
   const speak = useCallback((text: string) => {
     if (!isSupported || !text.trim()) {
       console.log("[JARVIS] Speech synthesis not supported or empty text");
@@ -60,52 +75,57 @@ export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
     // Cancel any ongoing speech
     speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "pt-BR";
-    utterance.rate = 1.0;
-    utterance.pitch = 0.9;
-    utterance.volume = 1.0;
+    // Small delay to ensure cancel is processed
+    setTimeout(() => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      utterance.rate = 1.0;
+      utterance.pitch = 0.9;
+      utterance.volume = 1.0;
 
-    if (voiceRef.current) {
-      utterance.voice = voiceRef.current;
-      console.log("[JARVIS] Using voice:", voiceRef.current.name);
-    } else {
-      console.log("[JARVIS] No Portuguese voice found, using default");
-    }
+      if (voiceRef.current) {
+        utterance.voice = voiceRef.current;
+        console.log("[JARVIS] Using voice:", voiceRef.current.name);
+      } else {
+        console.log("[JARVIS] No Portuguese voice found, using default");
+      }
 
-    // Safety timeout - reset isSpeaking if onend never fires (common on iOS)
-    let safetyTimeout: NodeJS.Timeout | null = null;
-    const estimatedDuration = Math.max(3000, text.length * 80); // ~80ms per character
+      // Safety timeout - reset isSpeaking if onend never fires (common on iOS)
+      let safetyTimeout: NodeJS.Timeout | null = null;
+      const estimatedDuration = Math.max(3000, text.length * 80);
 
-    utterance.onstart = () => {
-      console.log("[JARVIS] Speech started");
-      setIsSpeaking(true);
-      
-      // Set safety timeout
-      safetyTimeout = setTimeout(() => {
-        console.log("[JARVIS] Safety timeout - forcing isSpeaking to false");
+      utterance.onstart = () => {
+        console.log("[JARVIS] Speech started");
+        setIsSpeaking(true);
+        
+        safetyTimeout = setTimeout(() => {
+          console.log("[JARVIS] Safety timeout - forcing isSpeaking to false");
+          setIsSpeaking(false);
+        }, estimatedDuration);
+      };
+
+      utterance.onend = () => {
+        console.log("[JARVIS] Speech ended");
+        if (safetyTimeout) clearTimeout(safetyTimeout);
         setIsSpeaking(false);
-      }, estimatedDuration);
-    };
+      };
 
-    utterance.onend = () => {
-      console.log("[JARVIS] Speech ended");
-      if (safetyTimeout) clearTimeout(safetyTimeout);
-      setIsSpeaking(false);
-    };
+      utterance.onerror = (event) => {
+        console.error("[JARVIS] Speech error:", event.error);
+        if (safetyTimeout) clearTimeout(safetyTimeout);
+        setIsSpeaking(false);
+      };
 
-    utterance.onerror = (event) => {
-      console.error("[JARVIS] Speech error:", event.error);
-      if (safetyTimeout) clearTimeout(safetyTimeout);
-      setIsSpeaking(false);
-    };
+      // Workaround for Chrome bug - resume if paused
+      if (speechSynthesis.paused) {
+        speechSynthesis.resume();
+      }
 
-    // Workaround for Chrome bug - resume if paused
-    if (speechSynthesis.paused) {
-      speechSynthesis.resume();
-    }
-
-    speechSynthesis.speak(utterance);
+      speechSynthesis.speak(utterance);
+      
+      // Force start on some browsers
+      console.log("[JARVIS] Utterance queued, pending:", speechSynthesis.pending, "speaking:", speechSynthesis.speaking);
+    }, 50);
   }, [isSupported]);
 
   const cancel = useCallback(() => {
@@ -119,5 +139,6 @@ export const useSpeechSynthesis = (): UseSpeechSynthesisReturn => {
     isSupported,
     speak,
     cancel,
+    activate: activateSpeechSynthesis,
   };
 };
