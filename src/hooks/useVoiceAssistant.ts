@@ -4,6 +4,7 @@ import type { Message } from "@/components/ConversationHistory";
 import { useSpeechRecognition } from "./useSpeechRecognition";
 import { useSpeechSynthesis } from "./useSpeechSynthesis";
 import { useJarvisAPI } from "./useJarvisAPI";
+import { useSoundEffects } from "./useSoundEffects";
 
 interface UseVoiceAssistantReturn {
   state: VoiceState;
@@ -42,6 +43,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
   } = useSpeechSynthesis();
 
   const { sendMessage, isLoading, error: apiError } = useJarvisAPI();
+  const { playProcessingSound, playResponseSound } = useSoundEffects();
 
   const isSupported = recognitionSupported && synthesisSupported;
 
@@ -79,6 +81,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     addMessage("user", text.trim());
     
     setState("processing");
+    playProcessingSound(); // Play sound when processing starts
     
     try {
       // Call the AI API
@@ -89,6 +92,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       addMessage("assistant", responseText);
       
       setState("responding");
+      playResponseSound(); // Play sound when response is ready
       
       console.log("[JARVIS] Speaking response:", responseText);
       speak(responseText);
