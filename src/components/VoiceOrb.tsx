@@ -28,12 +28,81 @@ const CrossMarker = ({ angle }: { angle: number }) => {
   );
 };
 
+// Scanner line component - rotating beam inside the orb
+const ScannerLine = () => {
+  return (
+    <div className="absolute inset-0 animate-jarvis-scanner">
+      <div 
+        className="absolute top-1/2 left-1/2 w-1/2 h-[2px] origin-left"
+        style={{
+          background: "linear-gradient(90deg, hsl(185 100% 60% / 0.8) 0%, hsl(185 100% 50% / 0) 100%)",
+          boxShadow: "0 0 10px hsl(185 100% 50% / 0.6)",
+          transform: "translateY(-50%)",
+        }}
+      />
+    </div>
+  );
+};
+
+// Energy waves emanating from center
+const EnergyWaves = () => {
+  return (
+    <>
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="absolute w-[45%] h-[45%] rounded-full border-2 border-primary/40"
+          style={{
+            animation: "jarvis-energy-wave 2s ease-out infinite",
+            animationDelay: `${i * 0.6}s`,
+          }}
+        />
+      ))}
+    </>
+  );
+};
+
+// Data particles orbiting the orb
+const DataParticles = () => {
+  const particles = [
+    { delay: 0, duration: 3 },
+    { delay: 0.5, duration: 4 },
+    { delay: 1, duration: 3.5 },
+    { delay: 1.5, duration: 4.5 },
+    { delay: 2, duration: 3.2 },
+    { delay: 2.5, duration: 3.8 },
+  ];
+
+  return (
+    <>
+      {particles.map((p, i) => (
+        <div
+          key={i}
+          className="absolute w-full h-full"
+          style={{
+            animation: `jarvis-data-particle ${p.duration}s linear infinite`,
+            animationDelay: `${p.delay}s`,
+          }}
+        >
+          <div 
+            className="absolute w-1.5 h-1.5 bg-primary rounded-full left-1/2 -translate-x-1/2"
+            style={{
+              boxShadow: "0 0 8px hsl(185 100% 50% / 0.8), 0 0 16px hsl(185 100% 50% / 0.4)",
+            }}
+          />
+        </div>
+      ))}
+    </>
+  );
+};
+
 const VoiceOrb = ({ 
   state = "idle", 
   onPress, 
   assistantName = "JARVIS" 
 }: VoiceOrbProps) => {
   const [isPressed, setIsPressed] = useState(false);
+  const isResponding = state === "responding";
 
   const handlePress = () => {
     setIsPressed(true);
@@ -50,8 +119,12 @@ const VoiceOrb = ({
         <div 
           className={cn(
             "absolute w-full h-full rounded-full border border-primary/60",
-            state === "listening" && "animate-jarvis-ring-expand"
+            state === "listening" && "animate-jarvis-ring-expand",
+            isResponding && "animate-jarvis-respond-rotate animate-jarvis-hologram"
           )}
+          style={{
+            animationDuration: isResponding ? "12s, 3s" : undefined,
+          }}
         >
           {/* Cross markers at cardinal positions */}
           {[0, 90, 180, 270].map((angle) => (
@@ -63,26 +136,40 @@ const VoiceOrb = ({
         <div 
           className={cn(
             "absolute w-[82%] h-[82%] rounded-full border border-primary/50",
-            state === "processing" && "animate-jarvis-spin"
+            state === "processing" && "animate-jarvis-spin",
+            isResponding && "animate-jarvis-respond-rotate-reverse"
           )}
+          style={{
+            animationDuration: isResponding ? "5s" : undefined,
+          }}
         />
 
         {/* Ring 3 */}
         <div 
           className={cn(
             "absolute w-[65%] h-[65%] rounded-full border border-primary/40",
-            state === "processing" && "animate-jarvis-spin-reverse"
+            state === "processing" && "animate-jarvis-spin-reverse",
+            isResponding && "animate-jarvis-respond-rotate animate-jarvis-respond-pulse"
           )}
+          style={{
+            animationDuration: isResponding ? "7s, 2s" : undefined,
+          }}
         />
 
         {/* Ring 4 - Inner ring */}
         <div 
           className={cn(
             "absolute w-[50%] h-[50%] rounded-full border border-primary/30",
-            state === "processing" && "animate-jarvis-spin"
+            state === "processing" && "animate-jarvis-spin",
+            isResponding && "animate-jarvis-respond-rotate-reverse"
           )}
-          style={{ animationDuration: state === "processing" ? "1.5s" : undefined }}
+          style={{ 
+            animationDuration: state === "processing" ? "1.5s" : isResponding ? "4s" : undefined 
+          }}
         />
+
+        {/* Data particles when responding */}
+        {isResponding && <DataParticles />}
 
         {/* Central Orb - Dark sphere with intense cyan glow at bottom */}
         <button
@@ -93,6 +180,7 @@ const VoiceOrb = ({
             "transition-all duration-300",
             "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
             state === "listening" && "animate-jarvis-listening",
+            isResponding && "animate-jarvis-respond-glow",
             isPressed && "scale-95"
           )}
           style={{
@@ -101,7 +189,9 @@ const VoiceOrb = ({
               radial-gradient(ellipse 80% 50% at 50% 0%, hsl(200 20% 20% / 0.8) 0%, transparent 50%),
               radial-gradient(circle at 50% 50%, hsl(200 30% 12%) 0%, hsl(220 25% 8%) 50%, hsl(220 20% 5%) 100%)
             `,
-            boxShadow: state === "listening" 
+            boxShadow: isResponding
+              ? undefined // Let CSS animation handle it
+              : state === "listening" 
               ? `
                 0 25px 50px -10px hsl(185 100% 50% / 0.7),
                 0 40px 80px -20px hsl(185 100% 50% / 0.5),
@@ -117,8 +207,11 @@ const VoiceOrb = ({
             border: "1px solid hsl(185 80% 40% / 0.4)"
           }}
         >
+          {/* Scanner line inside orb when responding */}
+          {isResponding && <ScannerLine />}
+          
           {/* Orb inner content */}
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center z-10">
             {state === "responding" ? (
               <AudioWaveform />
             ) : state === "processing" ? (
@@ -146,6 +239,9 @@ const VoiceOrb = ({
             />
           </>
         )}
+
+        {/* Energy waves when responding */}
+        {isResponding && <EnergyWaves />}
       </div>
     </div>
   );
@@ -179,18 +275,29 @@ const ProcessingIndicator = () => {
   );
 };
 
-// Audio waveform component for responding state
+// Enhanced Audio waveform component for responding state
 const AudioWaveform = () => {
+  const bars = [
+    { delay: 0, maxHeight: 24 },
+    { delay: 0.1, maxHeight: 28 },
+    { delay: 0.15, maxHeight: 20 },
+    { delay: 0.2, maxHeight: 32 },
+    { delay: 0.25, maxHeight: 22 },
+    { delay: 0.3, maxHeight: 26 },
+    { delay: 0.35, maxHeight: 18 },
+  ];
+
   return (
     <div className="flex items-center gap-1">
-      {[0, 1, 2, 3, 4].map((i) => (
+      {bars.map((bar, i) => (
         <div
           key={i}
           className="w-1 bg-primary rounded-full"
           style={{
-            animation: "jarvis-wave 0.8s ease-in-out infinite",
-            animationDelay: `${i * 0.1}s`,
+            animation: "jarvis-waveform-bar 0.6s ease-in-out infinite",
+            animationDelay: `${bar.delay}s`,
             height: "12px",
+            boxShadow: "0 0 8px hsl(185 100% 50% / 0.6), 0 0 16px hsl(185 100% 50% / 0.3)",
           }}
         />
       ))}
