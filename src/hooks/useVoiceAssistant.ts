@@ -43,7 +43,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
   } = useSpeechSynthesis();
 
   const { sendMessage, isLoading, error: apiError } = useJarvisAPI();
-  const { playProcessingSound, playResponseSound } = useSoundEffects();
+  const { playProcessingSound, playResponseSound, vibrateProcessing, vibrateResponse } = useSoundEffects();
 
   const isSupported = recognitionSupported && synthesisSupported;
 
@@ -82,6 +82,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
     
     setState("processing");
     playProcessingSound(); // Play sound when processing starts
+    vibrateProcessing(); // Haptic feedback on mobile
     
     try {
       // Call the AI API
@@ -93,6 +94,7 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       
       setState("responding");
       playResponseSound(); // Play sound when response is ready
+      vibrateResponse(); // Haptic feedback on mobile
       
       console.log("[JARVIS] Speaking response:", responseText);
       speak(responseText);

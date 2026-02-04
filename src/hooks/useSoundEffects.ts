@@ -3,6 +3,8 @@ import { useCallback, useRef } from "react";
 interface UseSoundEffectsReturn {
   playProcessingSound: () => void;
   playResponseSound: () => void;
+  vibrateProcessing: () => void;
+  vibrateResponse: () => void;
 }
 
 export const useSoundEffects = (): UseSoundEffectsReturn => {
@@ -91,8 +93,28 @@ export const useSoundEffects = (): UseSoundEffectsReturn => {
     }
   }, [getAudioContext]);
 
+  // Haptic vibration when processing starts (short double pulse)
+  const vibrateProcessing = useCallback(() => {
+    if ("vibrate" in navigator) {
+      // Pattern: vibrate 50ms, pause 30ms, vibrate 50ms
+      navigator.vibrate([50, 30, 50]);
+      console.log("[JARVIS] Processing vibration triggered");
+    }
+  }, []);
+
+  // Haptic vibration when response is ready (single longer pulse)
+  const vibrateResponse = useCallback(() => {
+    if ("vibrate" in navigator) {
+      // Single 100ms vibration
+      navigator.vibrate(100);
+      console.log("[JARVIS] Response vibration triggered");
+    }
+  }, []);
+
   return {
     playProcessingSound,
     playResponseSound,
+    vibrateProcessing,
+    vibrateResponse,
   };
 };
