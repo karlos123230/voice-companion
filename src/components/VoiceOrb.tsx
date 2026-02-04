@@ -69,12 +69,19 @@ const VoiceOrb = ({
 
         {/* Ring 3 */}
         <div 
-          className="absolute w-[65%] h-[65%] rounded-full border border-primary/40"
+          className={cn(
+            "absolute w-[65%] h-[65%] rounded-full border border-primary/40",
+            state === "processing" && "animate-jarvis-spin-reverse"
+          )}
         />
 
         {/* Ring 4 - Inner ring */}
         <div 
-          className="absolute w-[50%] h-[50%] rounded-full border border-primary/30"
+          className={cn(
+            "absolute w-[50%] h-[50%] rounded-full border border-primary/30",
+            state === "processing" && "animate-jarvis-spin"
+          )}
+          style={{ animationDuration: state === "processing" ? "1.5s" : undefined }}
         />
 
         {/* Central Orb - Dark sphere with intense cyan glow at bottom */}
@@ -114,6 +121,8 @@ const VoiceOrb = ({
           <div className="flex flex-col items-center justify-center">
             {state === "responding" ? (
               <AudioWaveform />
+            ) : state === "processing" ? (
+              <ProcessingIndicator />
             ) : (
               <span 
                 className="text-primary font-normal text-base md:text-lg tracking-[0.3em] uppercase"
@@ -138,6 +147,34 @@ const VoiceOrb = ({
           </>
         )}
       </div>
+    </div>
+  );
+};
+
+// Processing indicator component
+const ProcessingIndicator = () => {
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <div className="flex items-center gap-1.5">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className="w-2 h-2 bg-primary rounded-full"
+            style={{
+              animation: "jarvis-processing-dot 1.2s ease-in-out infinite",
+              animationDelay: `${i * 0.2}s`,
+            }}
+          />
+        ))}
+      </div>
+      <span 
+        className="text-primary/70 font-light text-xs tracking-widest uppercase"
+        style={{
+          textShadow: "0 0 10px hsl(185 100% 50% / 0.5)"
+        }}
+      >
+        Pensando
+      </span>
     </div>
   );
 };
