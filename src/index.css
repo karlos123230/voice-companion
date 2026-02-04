@@ -212,6 +212,28 @@
     }
   }
 
+  /* Processing dots animation */
+  @keyframes jarvis-processing-dot {
+    0%, 80%, 100% {
+      transform: scale(0.6);
+      opacity: 0.4;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Reverse spin for processing */
+  @keyframes jarvis-spin-reverse {
+    0% {
+      transform: rotate(360deg);
+    }
+    100% {
+      transform: rotate(0deg);
+    }
+  }
+
   .animate-jarvis-breathe {
     animation: jarvis-breathe 4s ease-in-out infinite;
   }
@@ -238,6 +260,10 @@
 
   .animate-jarvis-spin {
     animation: jarvis-spin 2s linear infinite;
+  }
+
+  .animate-jarvis-spin-reverse {
+    animation: jarvis-spin-reverse 3s linear infinite;
   }
 
   .animate-jarvis-ripple {
