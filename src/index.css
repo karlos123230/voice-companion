@@ -272,28 +272,36 @@
 
   /* === RESPONDING STATE ANIMATIONS === */
 
-  /* Rotação suave para responding */
-  @keyframes jarvis-respond-rotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  /* Ring 1 - Rotação lenta + efeito holograma */
+  @keyframes jarvis-respond-ring1 {
+    0% { transform: rotate(0deg); opacity: 1; }
+    25% { opacity: 0.95; }
+    26% { opacity: 0.7; }
+    27% { opacity: 1; }
+    50% { transform: rotate(180deg); opacity: 1; }
+    75% { opacity: 0.9; }
+    76% { opacity: 0.75; }
+    77% { opacity: 1; }
+    100% { transform: rotate(360deg); opacity: 1; }
   }
 
-  /* Rotação reversa para responding */
-  @keyframes jarvis-respond-rotate-reverse {
+  /* Ring 2 - Rotação reversa */
+  @keyframes jarvis-respond-ring2 {
     0% { transform: rotate(360deg); }
     100% { transform: rotate(0deg); }
   }
 
-  /* Pulsação do orbe durante resposta */
-  @keyframes jarvis-respond-pulse {
-    0%, 100% { 
-      transform: scale(1);
-      filter: brightness(1);
-    }
-    50% { 
-      transform: scale(1.03);
-      filter: brightness(1.2);
-    }
+  /* Ring 3 - Rotação + pulsação */
+  @keyframes jarvis-respond-ring3 {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.05); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* Ring 4 - Rotação reversa rápida */
+  @keyframes jarvis-respond-ring4 {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
   }
 
   /* Efeito scanner linha girando */
@@ -332,15 +340,17 @@
   @keyframes jarvis-respond-glow {
     0%, 100% {
       box-shadow: 
-        0 0 40px hsl(185 100% 50% / 0.6),
-        0 0 80px hsl(185 100% 50% / 0.4),
-        inset 0 0 30px hsl(185 100% 50% / 0.2);
+        0 0 30px hsl(185 100% 50% / 0.7),
+        0 0 60px hsl(185 100% 50% / 0.5),
+        0 0 90px hsl(185 100% 50% / 0.3),
+        inset 0 0 20px hsl(185 100% 50% / 0.3);
     }
     50% {
       box-shadow: 
-        0 0 60px hsl(185 100% 50% / 0.8),
-        0 0 120px hsl(185 100% 50% / 0.5),
-        inset 0 0 50px hsl(185 100% 50% / 0.3);
+        0 0 50px hsl(185 100% 60% / 0.9),
+        0 0 100px hsl(185 100% 50% / 0.6),
+        0 0 150px hsl(185 100% 50% / 0.4),
+        inset 0 0 40px hsl(185 100% 50% / 0.4);
     }
   }
 
@@ -367,16 +377,20 @@
     }
   }
 
-  .animate-jarvis-respond-rotate {
-    animation: jarvis-respond-rotate 8s linear infinite;
+  .animate-jarvis-respond-ring1 {
+    animation: jarvis-respond-ring1 10s linear infinite;
   }
 
-  .animate-jarvis-respond-rotate-reverse {
-    animation: jarvis-respond-rotate-reverse 6s linear infinite;
+  .animate-jarvis-respond-ring2 {
+    animation: jarvis-respond-ring2 5s linear infinite;
   }
 
-  .animate-jarvis-respond-pulse {
-    animation: jarvis-respond-pulse 2s ease-in-out infinite;
+  .animate-jarvis-respond-ring3 {
+    animation: jarvis-respond-ring3 7s ease-in-out infinite;
+  }
+
+  .animate-jarvis-respond-ring4 {
+    animation: jarvis-respond-ring4 4s linear infinite;
   }
 
   .animate-jarvis-scanner {
