@@ -47,18 +47,17 @@ const ScannerLine = () => {
 // Energy waves emanating from center
 const EnergyWaves = () => {
   return (
-    <>
+    <div className="absolute inset-0 flex items-center justify-center">
       {[0, 1, 2].map((i) => (
         <div
           key={i}
-          className="absolute w-[45%] h-[45%] rounded-full border-2 border-primary/40"
+          className="absolute w-[45%] h-[45%] rounded-full border-2 border-primary/40 animate-jarvis-energy-wave"
           style={{
-            animation: "jarvis-energy-wave 2s ease-out infinite",
             animationDelay: `${i * 0.6}s`,
           }}
         />
       ))}
-    </>
+    </div>
   );
 };
 
@@ -120,11 +119,8 @@ const VoiceOrb = ({
           className={cn(
             "absolute w-full h-full rounded-full border border-primary/60",
             state === "listening" && "animate-jarvis-ring-expand",
-            isResponding && "animate-jarvis-respond-rotate animate-jarvis-hologram"
+            isResponding && "animate-jarvis-respond-ring1"
           )}
-          style={{
-            animationDuration: isResponding ? "12s, 3s" : undefined,
-          }}
         >
           {/* Cross markers at cardinal positions */}
           {[0, 90, 180, 270].map((angle) => (
@@ -137,11 +133,8 @@ const VoiceOrb = ({
           className={cn(
             "absolute w-[82%] h-[82%] rounded-full border border-primary/50",
             state === "processing" && "animate-jarvis-spin",
-            isResponding && "animate-jarvis-respond-rotate-reverse"
+            isResponding && "animate-jarvis-respond-ring2"
           )}
-          style={{
-            animationDuration: isResponding ? "5s" : undefined,
-          }}
         />
 
         {/* Ring 3 */}
@@ -149,11 +142,8 @@ const VoiceOrb = ({
           className={cn(
             "absolute w-[65%] h-[65%] rounded-full border border-primary/40",
             state === "processing" && "animate-jarvis-spin-reverse",
-            isResponding && "animate-jarvis-respond-rotate animate-jarvis-respond-pulse"
+            isResponding && "animate-jarvis-respond-ring3"
           )}
-          style={{
-            animationDuration: isResponding ? "7s, 2s" : undefined,
-          }}
         />
 
         {/* Ring 4 - Inner ring */}
@@ -161,11 +151,8 @@ const VoiceOrb = ({
           className={cn(
             "absolute w-[50%] h-[50%] rounded-full border border-primary/30",
             state === "processing" && "animate-jarvis-spin",
-            isResponding && "animate-jarvis-respond-rotate-reverse"
+            isResponding && "animate-jarvis-respond-ring4"
           )}
-          style={{ 
-            animationDuration: state === "processing" ? "1.5s" : isResponding ? "4s" : undefined 
-          }}
         />
 
         {/* Data particles when responding */}
