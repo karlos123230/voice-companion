@@ -103,19 +103,22 @@ serve(async (req) => {
     const userInterests = profile.interests || [];
     const personalityNotes = profile.personality_notes || null;
 
-    // Fetch last 20 conversations
+    // Fetch last 50 conversations for better context
     const conversationsResult = await supabase
       .from("conversations")
       .select("role, content")
       .eq("profile_id", profileId)
-      .order("created_at", { ascending: true })
-      .limit(20);
+      .order("created_at", { ascending: false })
+      .limit(50);
+    
+    // Reverse to get chronological order (oldest first)
+    const conversations = (conversationsResult.data || []).reverse();
 
     if (conversationsResult.error) {
       console.error("[JARVIS] Error fetching conversations:", conversationsResult.error);
     }
 
-    const conversationHistory = conversationsResult.data || [];
+    const conversationHistory = conversations;
 
     // Save user message to database
     const saveUserResult = await supabase
@@ -187,12 +190,12 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: aiMessages,
-        max_tokens: 200,
-        temperature: 0.8,
-      }),
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: aiMessages,
+          max_tokens: 500,
+          temperature: 0.8,
+        }),
     });
 
     if (!aiResponse.ok) {
