@@ -24,6 +24,8 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTranscriptRef = useRef("");
+  const hasSpokenRef = useRef(false);
+  const respondingFallbackRef = useRef<NodeJS.Timeout | null>(null);
   
   const {
     isListening,
@@ -47,9 +49,22 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
 
   const isSupported = recognitionSupported && synthesisSupported;
 
-  // Handle speech synthesis completion
+  // Track when speech actually starts
   useEffect(() => {
-    if (state === "responding" && !isSpeaking) {
+    if (state === "responding" && isSpeaking) {
+      hasSpokenRef.current = true;
+      // Clear fallback timeout since speech started
+      if (respondingFallbackRef.current) {
+        clearTimeout(respondingFallbackRef.current);
+        respondingFallbackRef.current = null;
+      }
+    }
+  }, [isSpeaking, state]);
+
+  // Handle speech synthesis completion - only go idle after speech has started AND ended
+  useEffect(() => {
+    if (state === "responding" && !isSpeaking && hasSpokenRef.current) {
+      console.log("[JARVIS] Speech completed, returning to idle");
       setState("idle");
     }
   }, [isSpeaking, state]);
@@ -92,19 +107,37 @@ export const useVoiceAssistant = (): UseVoiceAssistantReturn => {
       // Add assistant message to history
       addMessage("assistant", responseText);
       
+      // Reset spoken flag before entering responding state
+      hasSpokenRef.current = false;
       setState("responding");
       playResponseSound(); // Play sound when response is ready
       vibrateResponse(); // Haptic feedback on mobile
       
       console.log("[JARVIS] Speaking response:", responseText);
       speak(responseText);
+      
+      // Fallback: if speech never starts after 3 seconds, go back to idle
+      respondingFallbackRef.current = setTimeout(() => {
+        if (!hasSpokenRef.current) {
+          console.log("[JARVIS] Speech never started, fallback to idle");
+          setState("idle");
+        }
+      }, 3000);
     } catch (error) {
       console.error("[JARVIS] Error processing message:", error);
       const fallbackResponse = "Desculpe, tive um problema. Pode repetir?";
       setResponse(fallbackResponse);
       addMessage("assistant", fallbackResponse);
+      hasSpokenRef.current = false;
       setState("responding");
       speak(fallbackResponse);
+      
+      // Fallback timeout for error case too
+      respondingFallbackRef.current = setTimeout(() => {
+        if (!hasSpokenRef.current) {
+          setState("idle");
+        }
+      }, 3000);
     }
   }, [sendMessage, speak, addMessage]);
 
