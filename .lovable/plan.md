@@ -1,200 +1,58 @@
 
-# Correao dos Efeitos Roboticos do JARVIS
+## O que eu verifiquei (situação atual)
+- Os **keyframes e classes CSS do estado `responding` existem** em `src/index.css` (ex.: `@keyframes jarvis-respond-ring1..4`, `jarvis-scanner`, `jarvis-energy-wave`, `jarvis-data-particle` e as classes `animate-jarvis-respond-*`).
+- O componente **`src/components/VoiceOrb.tsx` já aplica essas classes** quando `state === "responding"` (ex.: `animate-jarvis-respond-ring1..4`, `animate-jarvis-respond-glow`, além de renderizar `ScannerLine`, `EnergyWaves` e `DataParticles`).
+- Então: **“implantado no código” está**, mas **o estado `responding` provavelmente não está ficando ativo tempo suficiente** para você ver as animações.
 
-## Problema Identificado
+## Causa mais provável de “não funciona”
+No hook `src/hooks/useVoiceAssistant.ts` existe este efeito:
 
-As animacoes do estado "responding" nao estao funcionando devido a conflitos entre:
-1. Classes CSS que definem animacoes separadas
-2. Estilos inline que tentam sobrescrever duracoes
-3. Falta de centralizacao nos componentes de ondas de energia
+- “Se estiver `responding` e `isSpeaking` for falso, volta para `idle`”.
 
-## Solucao
+Na prática, quando você chama `setState("responding")`, o `isSpeaking` ainda pode estar `false` por alguns milissegundos (porque o `speechSynthesis` só dispara `onstart` depois).  
+Resultado: o app **pode sair de `responding` quase instantaneamente** (fica um “pisca”) — e as animações não aparecem, mesmo que o áudio chegue a tocar.
 
-### Arquivo: `src/components/VoiceOrb.tsx`
+## Correção proposta (para de fato “aparecer o responding”)
+### 1) Ajustar a lógica de transição `responding -> idle`
+Em `useVoiceAssistant.ts`:
+- Criar um `useRef` para controlar se **a fala já começou** nesta rodada de resposta (ex.: `hasSpokenRef`).
+- Quando entrar em `responding`, resetar `hasSpokenRef.current = false`.
+- Quando `isSpeaking` virar `true` enquanto `state === "responding"`, marcar `hasSpokenRef.current = true`.
+- Só voltar para `idle` quando:
+  - `state === "responding"`
+  - `isSpeaking === false`
+  - **e** `hasSpokenRef.current === true` (ou seja, a fala realmente começou e depois terminou)
 
-**Mudancas necessarias:**
+Isso elimina o “auto-idle” prematuro e deixa as animações rodarem durante a fala.
 
-1. **Remover conflitos de animacao nos aneis**
-   - Usar uma unica classe de animacao por elemento OU combinar animacoes corretamente no CSS
-   - Remover os overrides de `animationDuration` inline e deixar o CSS controlar
+### 2) Fallback (evitar travar para sempre em casos raros)
+Adicionar um fallback simples:
+- Se por algum motivo a fala **nunca** iniciar (ex.: falha do TTS no dispositivo), manter `responding` por um tempo mínimo (ex.: 1–2s) e então voltar para `idle`.
+- Isso garante que o app não fique preso em `responding` caso o áudio falhe.
 
-2. **Corrigir centralizacao das EnergyWaves**
-   - Adicionar `items-center justify-center` ao wrapper das ondas
+### 3) (Opcional, mas recomendado) “Modo teste” rápido para validar animações
+Para acabar com a dúvida de “implantou ou não implantou”, adicionar um modo de teste só para desenvolvimento:
+- Um toggle pequeno (ou querystring `?demo=1`) que força `VoiceOrb` a renderizar em `responding`, sem depender de voz/IA.
+- Assim você consegue ver imediatamente os anéis girando/partículas/scanner.
 
-3. **Simplificar as animacoes para evitar conflitos**
-   - Cada anel tera uma unica animacao definida
-   - Usar CSS custom properties para duracao quando necessario
+## Como vamos validar que ficou corrigido
+1) Entrar na tela principal (onde aparece o orb).
+2) Acionar o JARVIS e esperar ele falar.
+3) Confirmar:
+   - Durante a fala, o texto “Respondendo...” permanece.
+   - Os anéis rodam (ring1..ring4), o glow pulsa, scanner gira, partículas orbitam e ondas aparecem.
+4) Testar também:
+   - Mobile (principalmente se você usa PWA instalado).
+   - Navegador diferente (Chrome/Edge) para descartar comportamento específico do TTS.
 
-### Arquivo: `src/index.css`
+## “Implantado/publicado” (o que pode estar acontecendo)
+- Se você estiver testando no **app instalado (PWA)** ou em uma versão “publicada”, pode acontecer de ver uma versão antiga por cache. Depois da correção:
+  - Vamos garantir que a versão atualizada seja entregue e orientar você a atualizar/fechar e abrir o PWA (ou aguardar o auto-update).
+- Se você estiver no **Preview**, deve atualizar instantaneamente após a implementação.
 
-**Mudancas necessarias:**
+## Arquivos que serão alterados
+- `src/hooks/useVoiceAssistant.ts` (correção do fluxo de estado do responding; principal)
+- (Opcional) `src/pages/Index.tsx` (modo teste / indicador de estado para depuração)
 
-1. **Criar animacoes combinadas**
-   - Combinar rotate + hologram em uma unica keyframe
-   - Combinar rotate + pulse em uma unica keyframe
-
-2. **Ajustar as animacoes para serem mais visiveis**
-   - Aumentar a intensidade do glow
-   - Tornar as rotacoes mais perceptiveis
-
----
-
-## Implementacao Tecnica Detalhada
-
-### 1. Corrigir VoiceOrb.tsx - Aneis
-
-```tsx
-// Ring 1 - remover animationDuration inline
-<div 
-  className={cn(
-    "absolute w-full h-full rounded-full border border-primary/60",
-    state === "listening" && "animate-jarvis-ring-expand",
-    isResponding && "animate-jarvis-respond-ring1"
-  )}
->
-```
-
-```tsx
-// Ring 2
-<div 
-  className={cn(
-    "absolute w-[82%] h-[82%] rounded-full border border-primary/50",
-    state === "processing" && "animate-jarvis-spin",
-    isResponding && "animate-jarvis-respond-ring2"
-  )}
-/>
-```
-
-```tsx
-// Ring 3
-<div 
-  className={cn(
-    "absolute w-[65%] h-[65%] rounded-full border border-primary/40",
-    state === "processing" && "animate-jarvis-spin-reverse",
-    isResponding && "animate-jarvis-respond-ring3"
-  )}
-/>
-```
-
-```tsx
-// Ring 4
-<div 
-  className={cn(
-    "absolute w-[50%] h-[50%] rounded-full border border-primary/30",
-    state === "processing" && "animate-jarvis-spin",
-    isResponding && "animate-jarvis-respond-ring4"
-  )}
-/>
-```
-
-### 2. Corrigir EnergyWaves - Centralizacao
-
-```tsx
-const EnergyWaves = () => {
-  return (
-    <div className="absolute inset-0 flex items-center justify-center">
-      {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="absolute w-[45%] h-[45%] rounded-full border-2 border-primary/40 animate-jarvis-energy-wave"
-          style={{
-            animationDelay: `${i * 0.6}s`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-```
-
-### 3. Atualizar index.css - Novas animacoes combinadas
-
-```css
-/* Ring 1 - Rotacao lenta + efeito holograma */
-@keyframes jarvis-respond-ring1 {
-  0% { transform: rotate(0deg); opacity: 1; }
-  25% { opacity: 0.95; }
-  26% { opacity: 0.7; }
-  27% { opacity: 1; }
-  50% { transform: rotate(180deg); opacity: 1; }
-  75% { opacity: 0.9; }
-  76% { opacity: 0.75; }
-  77% { opacity: 1; }
-  100% { transform: rotate(360deg); opacity: 1; }
-}
-
-/* Ring 2 - Rotacao reversa */
-@keyframes jarvis-respond-ring2 {
-  0% { transform: rotate(360deg); }
-  100% { transform: rotate(0deg); }
-}
-
-/* Ring 3 - Rotacao + pulsacao */
-@keyframes jarvis-respond-ring3 {
-  0% { transform: rotate(0deg) scale(1); }
-  50% { transform: rotate(180deg) scale(1.05); }
-  100% { transform: rotate(360deg) scale(1); }
-}
-
-/* Ring 4 - Rotacao reversa rapida */
-@keyframes jarvis-respond-ring4 {
-  0% { transform: rotate(360deg); }
-  100% { transform: rotate(0deg); }
-}
-
-.animate-jarvis-respond-ring1 {
-  animation: jarvis-respond-ring1 10s linear infinite;
-}
-
-.animate-jarvis-respond-ring2 {
-  animation: jarvis-respond-ring2 5s linear infinite;
-}
-
-.animate-jarvis-respond-ring3 {
-  animation: jarvis-respond-ring3 7s ease-in-out infinite;
-}
-
-.animate-jarvis-respond-ring4 {
-  animation: jarvis-respond-ring4 4s linear infinite;
-}
-```
-
-### 4. Melhorar o Glow do Orbe Central
-
-```css
-@keyframes jarvis-respond-glow {
-  0%, 100% {
-    box-shadow: 
-      0 0 30px hsl(185 100% 50% / 0.7),
-      0 0 60px hsl(185 100% 50% / 0.5),
-      0 0 90px hsl(185 100% 50% / 0.3),
-      inset 0 0 20px hsl(185 100% 50% / 0.3);
-  }
-  50% {
-    box-shadow: 
-      0 0 50px hsl(185 100% 60% / 0.9),
-      0 0 100px hsl(185 100% 50% / 0.6),
-      0 0 150px hsl(185 100% 50% / 0.4),
-      inset 0 0 40px hsl(185 100% 50% / 0.4);
-  }
-}
-```
-
----
-
-## Resumo das Mudancas
-
-| Arquivo | Mudanca |
-|---------|---------|
-| `src/components/VoiceOrb.tsx` | Simplificar classes de animacao, remover `animationDuration` inline, corrigir `EnergyWaves` |
-| `src/index.css` | Criar novas keyframes combinadas (`jarvis-respond-ring1` a `ring4`), melhorar intensidade do glow |
-
-## Resultado Esperado
-
-Quando o JARVIS estiver respondendo:
-- Os 4 aneis girarao em direcoes e velocidades diferentes
-- O efeito de holograma/glitch sera visivel no anel externo
-- O orbe central pulsara com um glow intenso
-- A linha de scanner girara dentro do orbe
-- As ondas de energia emanaram do centro corretamente centralizadas
-- As particulas de dados orbitarao visivelmente
+## Critério de pronto (o que você vai ver)
+- Ao responder (falando), o orb **fica claramente “robótico”** durante todo o período de fala, sem “piscar” para idle imediatamente.
