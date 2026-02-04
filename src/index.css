@@ -269,4 +269,133 @@
   .animate-jarvis-ripple {
     animation: jarvis-ripple 1.5s ease-out infinite;
   }
+
+  /* === RESPONDING STATE ANIMATIONS === */
+
+  /* Rotação suave para responding */
+  @keyframes jarvis-respond-rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Rotação reversa para responding */
+  @keyframes jarvis-respond-rotate-reverse {
+    0% { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
+  }
+
+  /* Pulsação do orbe durante resposta */
+  @keyframes jarvis-respond-pulse {
+    0%, 100% { 
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% { 
+      transform: scale(1.03);
+      filter: brightness(1.2);
+    }
+  }
+
+  /* Efeito scanner linha girando */
+  @keyframes jarvis-scanner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Ondas de energia emanando */
+  @keyframes jarvis-energy-wave {
+    0% {
+      transform: scale(0.8);
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.6);
+      opacity: 0;
+    }
+  }
+
+  /* Partículas de dados circulando */
+  @keyframes jarvis-data-particle {
+    0% {
+      transform: rotate(0deg) translateX(70px) rotate(0deg);
+      opacity: 0;
+    }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% {
+      transform: rotate(360deg) translateX(70px) rotate(-360deg);
+      opacity: 0;
+    }
+  }
+
+  /* Glow pulsante intenso */
+  @keyframes jarvis-respond-glow {
+    0%, 100% {
+      box-shadow: 
+        0 0 40px hsl(185 100% 50% / 0.6),
+        0 0 80px hsl(185 100% 50% / 0.4),
+        inset 0 0 30px hsl(185 100% 50% / 0.2);
+    }
+    50% {
+      box-shadow: 
+        0 0 60px hsl(185 100% 50% / 0.8),
+        0 0 120px hsl(185 100% 50% / 0.5),
+        inset 0 0 50px hsl(185 100% 50% / 0.3);
+    }
+  }
+
+  /* Efeito holograma/glitch sutil */
+  @keyframes jarvis-hologram {
+    0%, 91% { opacity: 1; }
+    92% { opacity: 0.8; }
+    93% { opacity: 1; }
+    94% { opacity: 0.85; }
+    95% { opacity: 1; }
+    96% { opacity: 0.9; }
+    97%, 100% { opacity: 1; }
+  }
+
+  /* Waveform bar animation */
+  @keyframes jarvis-waveform-bar {
+    0%, 100% {
+      height: 6px;
+      opacity: 0.6;
+    }
+    50% {
+      height: 28px;
+      opacity: 1;
+    }
+  }
+
+  .animate-jarvis-respond-rotate {
+    animation: jarvis-respond-rotate 8s linear infinite;
+  }
+
+  .animate-jarvis-respond-rotate-reverse {
+    animation: jarvis-respond-rotate-reverse 6s linear infinite;
+  }
+
+  .animate-jarvis-respond-pulse {
+    animation: jarvis-respond-pulse 2s ease-in-out infinite;
+  }
+
+  .animate-jarvis-scanner {
+    animation: jarvis-scanner 2s linear infinite;
+  }
+
+  .animate-jarvis-energy-wave {
+    animation: jarvis-energy-wave 2s ease-out infinite;
+  }
+
+  .animate-jarvis-data-particle {
+    animation: jarvis-data-particle 4s linear infinite;
+  }
+
+  .animate-jarvis-respond-glow {
+    animation: jarvis-respond-glow 1.5s ease-in-out infinite;
+  }
+
+  .animate-jarvis-hologram {
+    animation: jarvis-hologram 3s steps(1) infinite;
+  }
 }
