@@ -4,18 +4,32 @@ import { toast } from "sonner";
 
 export const usePWAAutoUpdate = () => {
   const {
-    needRefresh: [needRefresh, setNeedRefresh],
+    needRefresh: [needRefresh],
     updateServiceWorker,
   } = useRegisterSW({
     onRegisteredSW(swUrl, registration) {
       console.log("[PWA] Service Worker registrado:", swUrl);
       
-      // Check for updates every 60 seconds
       if (registration) {
+        // Verificar a cada 30 segundos
         setInterval(() => {
-          console.log("[PWA] Verificando atualizações...");
+          console.log("[PWA] Verificando atualizacoes...");
           registration.update();
-        }, 60 * 1000);
+        }, 30 * 1000);
+
+        // Verificar quando voltar para a aba
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "visible") {
+            console.log("[PWA] Aba visivel, verificando atualizacoes...");
+            registration.update();
+          }
+        });
+
+        // Verificar quando reconectar na internet
+        window.addEventListener("online", () => {
+          console.log("[PWA] Online, verificando atualizacoes...");
+          registration.update();
+        });
       }
     },
     onRegisterError(error) {
@@ -23,19 +37,14 @@ export const usePWAAutoUpdate = () => {
     },
   });
 
-  // Auto-update when new version is available
+  // Auto-update imediato quando nova versao disponivel
   useEffect(() => {
     if (needRefresh) {
-      console.log("[PWA] Nova versão disponível, atualizando...");
-      
-      toast.info("Atualizando JARVIS...", {
-        duration: 2000,
-      });
-      
-      // Small delay to show the toast, then update
+      console.log("[PWA] Nova versao disponivel, atualizando...");
+      toast.info("Atualizando JARVIS...", { duration: 1500 });
       setTimeout(() => {
         updateServiceWorker(true);
-      }, 1500);
+      }, 1000);
     }
   }, [needRefresh, updateServiceWorker]);
 
