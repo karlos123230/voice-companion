@@ -4,12 +4,16 @@ import VoiceOrb from "@/components/VoiceOrb";
 import ConversationHistory from "@/components/ConversationHistory";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 import { useAuth } from "@/hooks/useAuth";
+import { usePWAAutoUpdate } from "@/hooks/usePWAAutoUpdate";
 import { LogOut, User } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
   const { user, isLoading: authLoading, signOut } = useAuth();
   const { state, transcript, response, error, isSupported, messages, startListening, stopListening, clearHistory } = useVoiceAssistant();
+  
+  // PWA auto-update
+  usePWAAutoUpdate();
 
   // Redirect to auth if not logged in
   useEffect(() => {
