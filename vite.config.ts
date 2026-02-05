@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.png", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
-        name: "JARVIS - Seu Assistente Virtual",
-        short_name: "JARVIS",
+        name: "Valério - Seu Assistente Virtual",
+        short_name: "Valério",
         description: "Seu amigo virtual inteligente que lembra de você e te ajuda no dia a dia",
         theme_color: "#00d4ff",
         background_color: "#000000",
