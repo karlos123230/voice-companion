@@ -144,7 +144,7 @@ serve(async (req) => {
       minute: "2-digit",
     });
 
-    const systemPrompt = `Você é JARVIS, um assistente virtual amigável e empático.
+    const systemPrompt = `Você é Valério, um assistente virtual amigável e empático.
 Você conhece o usuário há algum tempo e são amigos. Você é genuíno, caloroso e se importa de verdade com o bem-estar do seu amigo.
 
 Informações sobre seu amigo:
@@ -176,12 +176,12 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
       { role: "user", content: message },
     ];
 
-    console.log("[JARVIS] Sending to AI with", aiMessages.length, "messages");
+    console.log("[VALERIO] Sending to AI with", aiMessages.length, "messages");
 
     // Call Lovable AI Gateway (Gemini)
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      throw new Error("LOVABLE_API_KEY não está configurado");
     }
 
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -200,7 +200,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
 
     if (!aiResponse.ok) {
       const errorText = await aiResponse.text();
-      console.error("[JARVIS] AI Gateway error:", aiResponse.status, errorText);
+      console.error("[VALERIO] AI Gateway error:", aiResponse.status, errorText);
       
       if (aiResponse.status === 429) {
         return new Response(
@@ -220,7 +220,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
     const aiData = await aiResponse.json();
     const assistantResponse = aiData.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
 
-    console.log("[JARVIS] AI response:", assistantResponse);
+    console.log("[VALERIO] AI response:", assistantResponse);
 
     // Save assistant response to database
     const saveAssistantResult = await supabase
@@ -232,7 +232,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
       });
 
     if (saveAssistantResult.error) {
-      console.error("[JARVIS] Error saving assistant message:", saveAssistantResult.error);
+        console.error("[VALERIO] Error saving assistant message:", saveAssistantResult.error);
     }
 
     // Extract user information from conversation (name, interests, etc.)
@@ -255,7 +255,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
         const extractedName = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
         if (!userName) {
           updates.name = extractedName;
-          console.log("[JARVIS] Extracted name:", extractedName);
+          console.log("[VALERIO] Extracted name:", extractedName);
         }
         break;
       }
@@ -281,7 +281,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
       if (keywords.some((kw) => lowerMessage.includes(kw)) && !currentInterests.has(interest)) {
         if (lowerMessage.includes("gosto") || lowerMessage.includes("adoro") || lowerMessage.includes("amo") || lowerMessage.includes("curto")) {
           currentInterests.add(interest);
-          console.log("[JARVIS] Extracted interest:", interest);
+          console.log("[VALERIO] Extracted interest:", interest);
         }
       }
     }
@@ -298,9 +298,9 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
         .eq("id", profileId);
 
       if (updateResult.error) {
-        console.error("[JARVIS] Error updating profile:", updateResult.error);
+        console.error("[VALERIO] Error updating profile:", updateResult.error);
       } else {
-        console.log("[JARVIS] Profile updated with:", updates);
+        console.log("[VALERIO] Profile updated with:", updates);
       }
     }
 
@@ -316,7 +316,7 @@ IMPORTANTE: Se o usuário mencionar seu nome (ex: "me chamo João", "sou a Maria
     );
 
   } catch (error) {
-    console.error("[JARVIS] Error:", error);
+    console.error("[VALERIO] Error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
