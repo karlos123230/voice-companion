@@ -108,7 +108,7 @@ const Index = () => {
           </div>
         )}
 
-        {/* Response display - what JARVIS is saying */}
+        {/* Response display - what Valério is saying */}
         {state === "responding" && response && (
           <div 
             className="mb-8 max-w-md text-center animate-fade-in"
@@ -116,7 +116,7 @@ const Index = () => {
               animation: "fadeIn 0.3s ease-in-out"
             }}
           >
-            <p className="text-muted-foreground text-sm uppercase tracking-wider mb-2">JARVIS:</p>
+            <p className="text-muted-foreground text-sm uppercase tracking-wider mb-2">Valério:</p>
             <p 
               className="text-primary text-lg"
               style={{
@@ -132,7 +132,7 @@ const Index = () => {
         <VoiceOrb 
           state={state} 
           onPress={handleOrbPress}
-          assistantName="JARVIS"
+          assistantName="Valério"
         />
 
         {/* Bottom instruction - Stylized cyan text */}
