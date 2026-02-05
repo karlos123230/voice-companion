@@ -36,10 +36,10 @@ export const useJarvisAPI = (): UseJarvisAPIReturn => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
-        throw new Error("Você precisa estar logado para conversar com o JARVIS");
+        throw new Error("Você precisa estar logado para conversar com o Valério");
       }
 
-      console.log("[JARVIS API] Sending message:", message);
+      console.log("[VALERIO API] Sending message:", message);
       
       const { data, error: functionError } = await supabase.functions.invoke<JarvisResponse>(
         "jarvis-chat",
@@ -49,8 +49,8 @@ export const useJarvisAPI = (): UseJarvisAPIReturn => {
       );
 
       if (functionError) {
-        console.error("[JARVIS API] Function error:", functionError);
-        throw new Error(functionError.message || "Erro ao comunicar com JARVIS");
+        console.error("[VALERIO API] Function error:", functionError);
+        throw new Error(functionError.message || "Erro ao comunicar com Valério");
       }
 
       if (!data) {
@@ -62,12 +62,12 @@ export const useJarvisAPI = (): UseJarvisAPIReturn => {
         setUserProfile(data.profile);
       }
 
-      console.log("[JARVIS API] Response:", data.response);
+      console.log("[VALERIO API] Response:", data.response);
       return data.response;
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Erro desconhecido";
-      console.error("[JARVIS API] Error:", errorMessage);
+      console.error("[VALERIO API] Error:", errorMessage);
       setError(errorMessage);
       
       // Return a fallback response

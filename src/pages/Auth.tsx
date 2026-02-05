@@ -143,10 +143,10 @@ const Auth = () => {
               textShadow: "0 0 20px hsl(185 100% 50% / 0.6), 0 0 40px hsl(185 100% 50% / 0.3)"
             }}
           >
-            JARVIS
+            Valério
           </h1>
           <p className="text-muted-foreground">
-            {isLogin ? "Entre para conversar com seu amigo virtual" : "Crie sua conta e conheça o JARVIS"}
+            {isLogin ? "Entre para conversar com seu amigo virtual" : "Crie sua conta e conheça o Valério"}
           </p>
         </div>
 

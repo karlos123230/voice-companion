@@ -21,13 +21,13 @@ const Install = () => {
         <div className="flex justify-center">
           <img
             src="/pwa-192x192.png"
-            alt="JARVIS"
+            alt="Valério"
             className="w-24 h-24 rounded-2xl shadow-lg shadow-primary/30"
           />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-foreground">Instalar JARVIS</h1>
+          <h1 className="text-3xl font-bold text-foreground">Instalar Valério</h1>
           <p className="text-muted-foreground">
             Tenha acesso rápido ao seu assistente virtual direto da tela inicial
           </p>
@@ -41,13 +41,13 @@ const Install = () => {
               </div>
             </div>
             <p className="text-lg font-medium text-foreground">
-              JARVIS já está instalado!
+              Valério já está instalado!
             </p>
             <p className="text-sm text-muted-foreground">
               Você pode encontrar o app na sua tela inicial
             </p>
             <Button onClick={() => navigate("/")} className="w-full">
-              Abrir JARVIS
+              Abrir Valério
             </Button>
           </div>
         ) : needsManualInstall ? (
@@ -88,7 +88,7 @@ const Install = () => {
                 <div>
                   <p className="font-medium text-foreground">3. Pronto!</p>
                   <p className="text-sm text-muted-foreground">
-                    O JARVIS aparecerá na sua tela inicial
+                    O Valério aparecerá na sua tela inicial
                   </p>
                 </div>
               </div>
